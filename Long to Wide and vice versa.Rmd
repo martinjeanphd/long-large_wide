@@ -1,0 +1,102 @@
+---
+title: "Long to Wide... and vice versa"
+output: html_notebook
+---
+
+
+```{r setup}
+library(tidyverse)
+```
+
+## Introduction
+Two ways of presenting a data table are frequently observed.
+
+The first format is called **long** because the number of columns is limited and one of these columns contains measured variables as values. This format is often used in relational databases, where the table usually contains the data on with three columns: object (site, individual, etc.), descriptor (variable), and value. This format is also well suited for entering and comparing data rather than analyzing them.
+
+A second way of structuring data is often used. In this second case, referred to as a **wide** format, the width of the table is usually large, as wide as the number of variables measured. This data presentation is often useful for presenting summary tables, or for organizing the data in a form required for certain data analyses.
+
+Both of these representations are useful in context, and it can be very useful to switch from one format to the other. This is made possible by the `tidyr' module.
+
+The `pivot_wider()` and `pivot_longer()` functions allow switching between the two formats. Note that these functions are newer in `tidyr` and replace the `spread()` and `gather()` functions which are still functional, but are retired from further development in `tidyr`.
+
+The `pivot_wider()` function has the following structure:
+
+`pivot_wider(data, names_from, values_from)`, where:
+
+- `data` is the name of the object containing the data in long format;
+- `names_from` is the column containing the variable names; the values contained in this column will become the new columns;
+- `value_from' is the column containing the values that will populate the cells of the table.
+
+As for the `pivot_longer` function, it has the following arguments:
+
+`pivot_longer(data, cols, names_to, values_to)`, where:
+
+- `data` is the name of the object containing the data in wide format;
+- `cols` is the column(s) that will be transformed into a variable
+- `names_to` is the name this new column will take
+- `values_to` is the name of the new column that will contain the values of the cells in the wide array.
+
+
+## Examples ##
+
+### Data file
+
+Here is a data file that will be used in the examples.
+
+```{r}
+myData <- data.frame (site  = c("2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111"),
+                  taxon = c("ALGSPE", "APIAME", "BUTUM", "CERDEM", "ELOCAN", "HETDUB", "MYRSP", "NUPVAR", "NYMODO", "PHRAUAU", "POTAMOT", "POTPER", "SCHPUN", "STUPEC", "VALAME", "BOLFLU", "BUTUM", "CERDEM", "ELOCAN", "HETDUB", "LEEOR", "LYTSA", "MYRSP", "PHRAUAU", "POTAMOT", "SAGLA", "SCHACU", "SCHPUN", "SPAEUR", "SPOMIC", "STUPEC", "TYPAN", "ALITRI", "APIAME", "APOCA", "ARCMIN", "ASCIN", "BIDSP", "BOECY", "BOLFLU", "BUTUM", "CALSE", "ELOCAN", "EUPPE", "EUTMAC", "GALSP", "IMPSP", "LAPCAN", "LYCSP", "LYTSA", "MIMRI", "MYRSP", "PHRAUAU", "POLSP", "SCHACU", "SCHPUN", "SCUGA", "SPOMIC", "TEUCA", "XANST", "ACESIN", "ANECAN", "APIAME", "BIDSP", "BOLFLU", "CORSER", "EPICI", "EQUPA", "FRAPE", "ONOSE", "PHAAR", "POPDEL", "SALINT", "TOXRAD", "VITRI", "ACENEG", "ACESIN", "ALITRI", "AMPBR", "ANECA", "APIAME", "ARIDR", "ASCSY", "BARVUL", "BIDSP", "BOECY", "BOLFLU", "EQUPA", "FRANI", "FRAPE", "IMPSP", "IRISP", "LAPCAN", "LYCSP", "LYTSA", "MENCA", "MENCAN", "MIMRI", "ONOSE", "PARQUE", "PHAAR", "PHRAUAU", "POLSP", "POPDEL", "RHACA", "SALNI", "SALSP", "STAPAL", "TEUCA", "TOXRAD", "ULMAM", "VITRI", "XANST", "APIAME", "ARCLA", "ASCSY", "CALSE", "EUTMAC", "FRAPE", "IRISP", "LYCUN", "LYTSA", "PHAAR", "POASP", "RUBID", "SALNI", "SOLCAN", "SOLSP", "TEUCA", "VITRI", "XANST", "ACERUB", "AMPBR", "APIAME", "ASCSY", "BIDSP", "EQUSP", "FRAPE", "IMPSP", "PARQUE", "PHAAR", "POPDEL", "POPTR", "RHACA", "TOXRAD", "VITRI"),
+                  abundance = c(8, 63, 3, 0.5, 18, 0.5, 0.5, 3, 3, 88, 3, 18, 0.5, 3, 3, 63, 88, 0.5, 0.5, 0.5, 0.5, 0.5, 8, 88, 18, 38, 3, 63, 8, 0.5, 0.5, 88, 8, 0.5, 63, 3, 0.5, 8, 38, 63, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 3, 3, 0.5, 88, 0.5, 0.5, 38, 3, 18, 8, 18, 18, 3, 3, 0.5, 0.5, 0.5, 18, 38, 3, 3, 63, 38, 38, 3, 0.5, 3, 38, 0.5, 0.5, 0.5, 3, 0.5, 0.5, 8, 88, 38, 0.5, 0.5, 63, 63, 0.5, 0.5, 63, 0.5, 0.5, 0.5, 0.5, 0.5, 3, 18, 0.5, 18, 0.5, 18, 0.5, 63, 3, 63, 0.5, 0.5, 3, 18, 0.5, 63, 38, 3, 3, 0.5, 0.5, 3, 0.5, 3, 18, 3, 38, 38, 88, 3, 3, 18, 0.5, 3, 3, 18, 0.5, 38, 3, 8, 0.5, 38, 0.5, 63, 63, 0.5, 88, 38)
+                  )
+head(myData)
+```
+
+This is a **long** file of biological inventory data. It consists of three columns:
+
+- the name of the sampling site;
+- the abbreviation of the taxon observed;
+- the abundance value of the taxon in the site.
+
+### Switch from long to wide format
+
+We will use the `myData' object we created earlier as a data source. Suppose we have exported data from a relational database and want to analyze it in R in wide format. The basic command is then:
+
+```{r}
+data_wide <- pivot_wider(myData, names_from = "taxon", values_from = "abundance")
+```
+
+or when using a pipe:
+
+```{r}
+data_wide <- myData %>%
+  pivot_wider(
+    names_from = taxon,
+    values_from = abundance
+  )
+```
+
+### Switch from wide to long format
+
+Now let's convert the `data_wide` object to long format. Let's say we want to create an array that will be imported into a relational database. We want to create an array with three columns: site, taxon, and abundance.
+
+The command to generate this table is as follows:
+
+```{r}
+data_long <- pivot_longer(data_wide, -site, names_to = "taxon", values_to = "abundance", values_drop_na = TRUE)
+```
+
+Or using a pipe:
+
+```{r}
+data_long <- data_wide %>%
+  pivot_longer(
+    -station, 
+    names_to = "taxon", 
+    values_to = "abundance", 
+    values_drop_na = TRUE)
+```
+
+## For more information
+
+The above examples are simple, and the pivot functions can be more complex as required. For more details, see the [Pivoting] page (https://tidyr.tidyverse.org/articles/pivot.html) on the `tidyr' web site.
+

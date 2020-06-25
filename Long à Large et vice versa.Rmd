@@ -1,0 +1,99 @@
+---
+title: "Long à Large... et vice versa"
+output: html_notebook
+---
+
+
+```{r setup}
+library(tidyverse)
+```
+
+## Introduction
+On observe fréquemment deux manières de présenter un tableau de données.
+
+Le premier format est qualifié de **long** car le nombre de colonnes est limité et une de ces colonnes contient comme valeurs des variables mesurées (ici, la colonne *taxon*). Ce format est souvent utilisé dans les bases de données relationnelles, où la table contient généralement les données sur avec trois colonnes: objet (site, individu, etc.), descripteur (variable), et valeur. Ce format est également bien adapté à la saisie et la comparaison de données plutôt qu'à les analyser.
+
+Une seconde façon de structurer les données est souvent utilisée. Dans ce second cas, qualifié de format **large**, la largeur du tableau est généralement importante, aussi large que le nombre de variables mesurées. Cette présentation des données est souvent utile pour présenter des tableaux sommaires, ou pour organiser les données sous une forme requise pour certaines analyses de données.
+
+Ces deux représentations sont utiles dans leur contexte et il peut être très utile permuter d'un format à l'autre. Cela est possible grâce au module `tidyr`.
+
+Les fonctions `pivot_wider()` et `pivot_longer()` permettent de basculer d'une format à l'autre. Notez que ces fonctions sont récentes dans `tidyr` et remplacent les fonctions `spread()` et `gather()` qui sont toujours fonctionnelles, mais sont retirées de tout développement futur dans `tidyr`.
+
+La fonction `pivot_wider()` possède la structure suivante :
+
+`pivot_wider(data, names_from, values_from)`, où:
+
+- `data` est le nom de l'objet contenant les données en format long;
+- `names_from`` est la colonne contenant le nom des variables; les valeurs contenues dans cette colonne deviendront les nouvelles colonnes;
+- `value_from` est la colonne contenant les valeurs qui peupleront les cellules du tableau.
+
+Quant à elle, la fonction `pivot_longer` possède les arguments suivant:
+
+`pivot_longer(data, cols, names_to, values_to)`, où:
+
+- `data` est le nom de l'objet contenant les données en format large;
+- `cols` est la ou les colonnes qui seront transformées en une variable
+- `names_to` représente le nom que prendra cette nouvelle colonne
+- `values_to` est le nom de la nouvelle colonne qui contiendra les valeurs des cellules du tableau large
+
+
+## Exemples
+
+### Fichier de données
+
+Voici un fichier de données qui sera utilisé dans les exemples.
+
+```{r}
+mesDonnees <- data.frame (station  = c("2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0001", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0002", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0101", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0102", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0103", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0104", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111", "2012MTL0111"),
+                  taxon = c("ALGSPE", "APIAME", "BUTUM", "CERDEM", "ELOCAN", "HETDUB", "MYRSP", "NUPVAR", "NYMODO", "PHRAUAU", "POTAMOT", "POTPER", "SCHPUN", "STUPEC", "VALAME", "BOLFLU", "BUTUM", "CERDEM", "ELOCAN", "HETDUB", "LEEOR", "LYTSA", "MYRSP", "PHRAUAU", "POTAMOT", "SAGLA", "SCHACU", "SCHPUN", "SPAEUR", "SPOMIC", "STUPEC", "TYPAN", "ALITRI", "APIAME", "APOCA", "ARCMIN", "ASCIN", "BIDSP", "BOECY", "BOLFLU", "BUTUM", "CALSE", "ELOCAN", "EUPPE", "EUTMAC", "GALSP", "IMPSP", "LAPCAN", "LYCSP", "LYTSA", "MIMRI", "MYRSP", "PHRAUAU", "POLSP", "SCHACU", "SCHPUN", "SCUGA", "SPOMIC", "TEUCA", "XANST", "ACESIN", "ANECAN", "APIAME", "BIDSP", "BOLFLU", "CORSER", "EPICI", "EQUPA", "FRAPE", "ONOSE", "PHAAR", "POPDEL", "SALINT", "TOXRAD", "VITRI", "ACENEG", "ACESIN", "ALITRI", "AMPBR", "ANECA", "APIAME", "ARIDR", "ASCSY", "BARVUL", "BIDSP", "BOECY", "BOLFLU", "EQUPA", "FRANI", "FRAPE", "IMPSP", "IRISP", "LAPCAN", "LYCSP", "LYTSA", "MENCA", "MENCAN", "MIMRI", "ONOSE", "PARQUE", "PHAAR", "PHRAUAU", "POLSP", "POPDEL", "RHACA", "SALNI", "SALSP", "STAPAL", "TEUCA", "TOXRAD", "ULMAM", "VITRI", "XANST", "APIAME", "ARCLA", "ASCSY", "CALSE", "EUTMAC", "FRAPE", "IRISP", "LYCUN", "LYTSA", "PHAAR", "POASP", "RUBID", "SALNI", "SOLCAN", "SOLSP", "TEUCA", "VITRI", "XANST", "ACERUB", "AMPBR", "APIAME", "ASCSY", "BIDSP", "EQUSP", "FRAPE", "IMPSP", "PARQUE", "PHAAR", "POPDEL", "POPTR", "RHACA", "TOXRAD", "VITRI"),
+                  abondance = c(8, 63, 3, 0.5, 18, 0.5, 0.5, 3, 3, 88, 3, 18, 0.5, 3, 3, 63, 88, 0.5, 0.5, 0.5, 0.5, 0.5, 8, 88, 18, 38, 3, 63, 8, 0.5, 0.5, 88, 8, 0.5, 63, 3, 0.5, 8, 38, 63, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 3, 3, 0.5, 88, 0.5, 0.5, 38, 3, 18, 8, 18, 18, 3, 3, 0.5, 0.5, 0.5, 18, 38, 3, 3, 63, 38, 38, 3, 0.5, 3, 38, 0.5, 0.5, 0.5, 3, 0.5, 0.5, 8, 88, 38, 0.5, 0.5, 63, 63, 0.5, 0.5, 63, 0.5, 0.5, 0.5, 0.5, 0.5, 3, 18, 0.5, 18, 0.5, 18, 0.5, 63, 3, 63, 0.5, 0.5, 3, 18, 0.5, 63, 38, 3, 3, 0.5, 0.5, 3, 0.5, 3, 18, 3, 38, 38, 88, 3, 3, 18, 0.5, 3, 3, 18, 0.5, 38, 3, 8, 0.5, 38, 0.5, 63, 63, 0.5, 88, 38)
+                  )
+head(mesDonnees)
+```
+
+Ce fichier en format **long** des données d'inventaire biologique. Il comprend trois colonnes:
+
+- le nom de la station d'échantillonnage;
+- l'abréviation du taxon observé;
+- la valeur d'abondance du taxon dans la station.
+
+### Passer d'un format long à un format large
+
+Nous allons utiliser l'objet `mesDonnees` que nous avons créé précédemment comme source de données. Supposons que nous avons exporter des données d'une base de données relationnelle et que nous souhaitons les analyser dans R en format large. La commande de base est alors:
+
+```{r}
+donnees_large <- pivot_wider(mesDonnees, names_from = "taxon", values_from = "abondance")
+```
+
+ou en utlisant un tuyau:
+
+```{r}
+donnees_large <- mesDonnees %>%
+    pivot_wider(
+        names_from = taxon,
+        values_from = abondance
+    )
+```
+
+
+### Passer d'un format large à un format long
+
+Convertissons maintenant l'objet `donnees_large` en format long. Imaginons que nous souhaitons créer un tableau qui sera importé dans une base de données relationnelle. Nous souhaitons créer ainsi un tableau contenant trois colonnes: station, taxon, et abondance
+
+La commande pour générer ce tableau est la suivante:
+
+```{r}
+donnees_long <- pivot_longer(donnees_large, -station, names_to = "taxon", values_to = "abondance", values_drop_na = TRUE)
+```
+
+Une autre façon d'écrire la même commande, en utilisant un tuyau est:
+
+```{r}
+donnees_long <- donnees_large %>% 
+  pivot_longer(-station, names_to = "taxon", values_to = "abondance", values_drop_na = TRUE)
+```
+
+## Pour plus d'information
+
+Les exemples ci-haut sont simples, et les fonctions de pivot peuvent être plus complexes selon les besoins. Pour plus de détails, consultez la page [Pivoting](https://tidyr.tidyverse.org/articles/pivot.html) du site de référence du module `tidyr`.
+
